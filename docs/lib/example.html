@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>example.rb</title>
+  <link rel="stylesheet" href="http://jashkenas.github.com/docco/resources/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div id="jump_to">
+    Jump To &hellip;
+    <div id="jump_wrapper">
+      <div id="jump_page">
+          <a class="source" href="example.html">example.rb</a>
+          <a class="source" href="extensions/fixnum.html">fixnum.rb</a>
+          <a class="source" href="extensions/object.html">object.rb</a>
+          <a class="source" href="extensions/range.html">range.rb</a>
+          <a class="source" href="extensions/regexp.html">regexp.rb</a>
+          <a class="source" href="extensions/string.html">string.rb</a>
+          <a class="source" href="rubec.html">rubec.rb</a>
+          <a class="source" href="rubec/state.html">state.rb</a>
+      </div>
+    </div>
+  </div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>example.rb</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="nb">require</span> <span class="s1">&#39;rubec&#39;</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>To demonstrate the basics of Rubec, I&rsquo;m going to use a basic Calculator. Our
+calculator is going to parse and evaluate simple arithmetic statements like
+&ldquo;1 + 2 * 3&rdquo;.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">class</span> <span class="nc">Calculator</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>rubec consists mostly of methods in the Rubec module, so we need to include it</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="kp">include</span> <span class="no">Rubec</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>first we create the parsers.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">initialize</span>
+    <span class="n">utility_parsers</span>
+    <span class="n">operator_parsers</span>
+    <span class="n">integer_parsers</span>
+    <span class="n">term_and_expr_parsers</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>here we are creating a whitespace parser using the ignore() method. This will match
+whitespace, but won&rsquo;t add anything to the final syntax tree.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">utility_parsers</span>
+    <span class="vi">@whitespace</span> <span class="o">=</span> <span class="n">ignore</span><span class="sr"> /\s+/</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>this is going to be used to make the operator parsers. We use between() to match three
+parsers as a single pattern, only keeping the result of the middle one, and opt() so
+that the whitespace is optional.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">make_operator</span> <span class="n">op</span>
+    <span class="n">between</span><span class="p">(</span><span class="n">opt</span><span class="p">(</span><span class="vi">@whitespace</span><span class="p">),</span> <span class="n">op</span><span class="p">,</span> <span class="n">opt</span><span class="p">(</span><span class="vi">@whitespace</span><span class="p">))</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">operator_parsers</span>
+    <span class="vi">@plus</span> <span class="o">=</span> <span class="n">make_operator</span> <span class="s2">&quot;+&quot;</span>
+    <span class="vi">@minus</span> <span class="o">=</span> <span class="n">make_operator</span> <span class="s2">&quot;-&quot;</span>
+    <span class="vi">@times</span> <span class="o">=</span> <span class="n">make_operator</span> <span class="s2">&quot;*&quot;</span>
+    <span class="vi">@divide</span> <span class="o">=</span> <span class="n">make_operator</span> <span class="s2">&quot;/&quot;</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>here we use action() so we can process the output of the parser, converting an array of
+strings, each containing a single digit into a single Integer.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">integer_parsers</span>
+    <span class="vi">@integer</span> <span class="o">=</span> <span class="n">action</span><span class="p">(</span><span class="n">seq</span><span class="p">(</span><span class="mi">1</span><span class="o">.</span><span class="n">.</span><span class="mi">9</span><span class="p">,</span> <span class="n">rep0</span><span class="p">(</span><span class="mi">0</span><span class="o">.</span><span class="n">.</span><span class="mi">9</span><span class="p">)))</span> <span class="k">do</span> <span class="o">|</span><span class="n">ast</span><span class="o">|</span>
+      <span class="n">ast</span><span class="o">.</span><span class="n">flatten</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to_i</span>
+    <span class="k">end</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>Here we use choice() to create a parser that matches the first of a number of options and seq()
+to match a sequence of several parsers as a single parser. Also, since Ruby doesn&rsquo;t support lazyr
+evaluation, we need to use forward definitions to enable recursive parsers</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">term_and_expr_parsers</span>
+    <span class="vi">@term</span> <span class="o">=</span> <span class="nb">proc</span><span class="p">{</span><span class="o">|*</span><span class="n">args</span><span class="o">|</span> <span class="vi">@term</span><span class="o">[*</span><span class="n">args</span><span class="o">]</span><span class="p">}</span>
+    <span class="vi">@term</span> <span class="o">=</span> <span class="n">seq</span><span class="p">(</span>
+        <span class="n">choice</span><span class="p">(</span><span class="vi">@integer</span><span class="p">),</span> 
+        <span class="n">choice</span><span class="p">(</span><span class="vi">@times</span><span class="p">,</span> <span class="vi">@divide</span><span class="p">),</span> 
+        <span class="n">choice</span><span class="p">(</span><span class="vi">@term</span><span class="p">,</span> <span class="vi">@integer</span><span class="p">))</span>
+    <span class="vi">@expr</span> <span class="o">=</span> <span class="nb">proc</span><span class="p">{</span><span class="o">|*</span><span class="n">args</span><span class="o">|</span> <span class="vi">@expr</span><span class="o">[*</span><span class="n">args</span><span class="o">]</span><span class="p">}</span>
+    <span class="vi">@expr</span> <span class="o">=</span> <span class="n">seq</span><span class="p">(</span>
+        <span class="n">choice</span><span class="p">(</span><span class="vi">@term</span><span class="p">,</span> <span class="vi">@integer</span><span class="p">),</span>
+        <span class="n">choice</span><span class="p">(</span><span class="vi">@plus</span><span class="p">,</span> <span class="vi">@minus</span><span class="p">),</span>
+        <span class="n">choice</span><span class="p">(</span><span class="vi">@term</span><span class="p">,</span> <span class="vi">@expr</span><span class="p">,</span> <span class="vi">@integer</span><span class="p">))</span>
+    <span class="vi">@parser</span> <span class="o">=</span> <span class="n">choice</span><span class="p">(</span><span class="vi">@expr</span><span class="p">,</span> <span class="vi">@term</span><span class="p">,</span> <span class="vi">@integer</span><span class="p">)</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-9'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-9">&#182;</a>
+        </div>
+        <p>the parse() method is used to apply a parser to a string. It returns a data tree representing
+the abstract syntax tree.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">parse_expr</span> <span class="n">str</span>
+    <span class="n">parse</span><span class="p">(</span><span class="n">str</span><span class="p">,</span> <span class="vi">@parser</span><span class="p">)</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-10'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-10">&#182;</a>
+        </div>
+        <p>this utility method is for evaluating the syntax tree returned by the #parse_expr method</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">evaluate_tree</span> <span class="n">ast</span>
+    <span class="n">n1</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">n2</span> <span class="o">=</span> <span class="n">ast</span>
+    <span class="n">n1</span> <span class="o">=</span> <span class="n">n1</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="nb">Array</span><span class="p">)</span> <span class="p">?</span> <span class="n">evaluate_tree</span><span class="p">(</span><span class="n">n1</span><span class="p">)</span> <span class="p">:</span> <span class="n">n1</span>
+    <span class="n">n2</span> <span class="o">=</span> <span class="n">n2</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="nb">Array</span><span class="p">)</span> <span class="p">?</span> <span class="n">evaluate_tree</span><span class="p">(</span><span class="n">n2</span><span class="p">)</span> <span class="p">:</span> <span class="n">n2</span>
+    <span class="n">n1</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">to_sym</span><span class="p">,</span> <span class="n">n2</span><span class="p">)</span>
+  <span class="k">end</span>
+
+  <span class="kp">public</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-11'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-11">&#182;</a>
+        </div>
+        <p>the calculate method just ties it all together and provides an entry point. The abstract syntax
+tree is also printed for demonstration purposes</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">calculate</span> <span class="n">str</span>
+    <span class="n">ast</span> <span class="o">=</span> <span class="n">parse_expr</span><span class="p">(</span><span class="n">str</span><span class="p">)</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span>
+    <span class="nb">puts</span> <span class="n">ast</span><span class="o">.</span><span class="n">to_s</span>
+    <span class="n">evaluate_tree</span><span class="p">(</span><span class="n">ast</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-12'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-12">&#182;</a>
+        </div>
+        <p>now we test our new calculator</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="n">c</span> <span class="o">=</span> <span class="no">Calculator</span><span class="o">.</span><span class="n">new</span>
+<span class="nb">puts</span> <span class="n">c</span><span class="o">.</span><span class="n">calculate</span><span class="p">(</span><span class="s2">&quot;1 * 2 + 3 * 4&quot;</span><span class="p">)</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

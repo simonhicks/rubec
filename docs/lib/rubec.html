@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>rubec.rb</title>
+  <link rel="stylesheet" href="http://jashkenas.github.com/docco/resources/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div id="jump_to">
+    Jump To &hellip;
+    <div id="jump_wrapper">
+      <div id="jump_page">
+          <a class="source" href="example.html">example.rb</a>
+          <a class="source" href="extensions/fixnum.html">fixnum.rb</a>
+          <a class="source" href="extensions/object.html">object.rb</a>
+          <a class="source" href="extensions/range.html">range.rb</a>
+          <a class="source" href="extensions/regexp.html">regexp.rb</a>
+          <a class="source" href="extensions/string.html">string.rb</a>
+          <a class="source" href="rubec.html">rubec.rb</a>
+          <a class="source" href="rubec/state.html">state.rb</a>
+      </div>
+    </div>
+  </div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>rubec.rb</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p><strong>Rubec</strong> is a set of parser combinators written in ruby.</p>
+
+<p>For the purposes of this library, a parser is a proc that takes a Rubec::State object,
+and checks whether the remainder of the string begins with a specific pattern. If so,
+it updates the State object (advancing it&rsquo;s position) and returns either the matching
+or some function of the matching string. If it doesn&rsquo;t match, then the state object is
+left ualtered and the parser returns nil</p>
+
+<p>Parsers can be created using the #to_parser method&hellip;</p>
+
+<pre><code># this will match when the remaining state begins with "hello"
+hello = "hello".to_parser     
+# this will match when the remaining state begins with a digit
+digit = /\d/.to_parser        
+lowercase = ("a".."z").to_parser
+non_zero = (1..9).to_parser
+</code></pre>
+
+<p>The methods in this module are combinators, which means they take one or more parsers
+as their arguments, and return more complex parsers. For example,</p>
+
+<pre><code>require 'rubec'
+include Rubec
+
+zero = 0.to_parser
+non_zero = (1..9).to_parser
+digit = choice(zero, non_zero)
+integer = seq(zero, rep0(digit))
+</code></pre>
+
+<p>In fact, all the combinators will automatically call #to_parser whenever they expect
+a parser so you can also do this&hellip;</p>
+
+<pre><code>require 'rubec'
+include Rubec
+
+digit = choice(0, 1..9)
+integer = seq(0, rep0(digit))
+</code></pre>
+
+<p>The best way to use parsers is using Rubec.parse(str, parser) as this automatically
+creates a Rubec::State object and removes any ignored items for you, returning only
+the abstract data tree&hellip;</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>load the extensions so we can use the #to_parser method on existing classes</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="sx">%w(object regexp string fixnum range)</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">c</span><span class="o">|</span>
+  <span class="nb">require</span> <span class="no">File</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">__FILE__</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/extensions/</span><span class="si">#{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="k">end</span>
+
+<span class="k">module</span> <span class="nn">Rubec</span>
+  <span class="nb">require</span> <span class="no">File</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">__FILE__</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;/rubec/state&#39;</span>
+  <span class="kp">extend</span> <span class="nb">self</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>takes any number of parsers and returns another parser that matches the first of the
+patterns matched by the given parsers</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">choice</span> <span class="o">*</span><span class="n">parsers</span>
+    <span class="nb">proc</span> <span class="k">do</span> <span class="o">|</span><span class="n">state</span><span class="o">|</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="kp">nil</span>
+      <span class="n">parsers</span><span class="o">.</span><span class="n">find</span> <span class="k">do</span> <span class="o">|</span><span class="n">pars</span><span class="o">|</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">pars</span><span class="o">.</span><span class="n">to_parser</span><span class="o">[</span><span class="n">state</span><span class="o">]</span>
+      <span class="k">end</span>
+      <span class="o">!</span><span class="n">result</span><span class="o">.</span><span class="n">nil?</span> <span class="p">?</span> <span class="n">result</span> <span class="p">:</span> <span class="kp">nil</span>
+    <span class="k">end</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>takes a parser and returns another parser that either matches the pattern matched by
+that parser or matches anything and returns false. This can be used to match optional
+patterns.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">opt</span> <span class="n">psr</span>
+    <span class="nb">proc</span> <span class="k">do</span> <span class="o">|</span><span class="n">state</span><span class="o">|</span>
+      <span class="p">(</span><span class="n">res</span> <span class="o">=</span> <span class="n">psr</span><span class="o">.</span><span class="n">to_parser</span><span class="o">[</span><span class="n">state</span><span class="o">]</span><span class="p">)</span><span class="o">.</span><span class="n">nil?</span> <span class="p">?</span> <span class="kp">false</span> <span class="p">:</span> <span class="n">res</span>
+    <span class="k">end</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>takes a parser and returns another parser that matches 0 or more repetitions of the
+the pattern matched by the given parser.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">rep0</span> <span class="n">pars</span>
+    <span class="nb">proc</span> <span class="k">do</span> <span class="o">|</span><span class="n">state</span><span class="o">|</span>
+      <span class="n">results</span> <span class="o">=</span> <span class="o">[]</span>
+      <span class="k">while</span> <span class="o">!</span><span class="p">(</span><span class="n">res</span> <span class="o">=</span> <span class="n">pars</span><span class="o">.</span><span class="n">to_parser</span><span class="o">[</span><span class="n">state</span><span class="o">]</span><span class="p">)</span><span class="o">.</span><span class="n">nil?</span>
+        <span class="n">results</span> <span class="o">&lt;&lt;</span> <span class="n">res</span>
+      <span class="k">end</span>
+      <span class="n">results</span>
+    <span class="k">end</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>takes a parser and returns another parser that matches 1 or more repetitions of the
+pattern matched by the give parser.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">rep1</span> <span class="n">pars</span>
+    <span class="nb">proc</span> <span class="k">do</span> <span class="o">|</span><span class="n">state</span><span class="o">|</span>
+      <span class="n">results</span> <span class="o">=</span> <span class="kp">nil</span>
+      <span class="k">if</span> <span class="o">!</span><span class="p">(</span><span class="n">res</span> <span class="o">=</span> <span class="n">pars</span><span class="o">.</span><span class="n">to_parser</span><span class="o">[</span><span class="n">state</span><span class="o">]</span><span class="p">)</span><span class="o">.</span><span class="n">nil?</span>
+        <span class="n">more</span> <span class="o">=</span> <span class="n">rep0</span><span class="p">(</span><span class="n">pars</span><span class="p">)</span><span class="o">[</span><span class="n">state</span><span class="o">]</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="n">more</span><span class="o">.</span><span class="n">unshift</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+      <span class="k">end</span>
+      <span class="n">results</span>
+    <span class="k">end</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>takes any number of parsers and returns another parser that matches only if all the
+given parsers match in sequence. (ie. it matches a pattern constructed by the
+sequence of patterns matched by the given parsers)</p>
+
+<p>The state is cloned before it is parsed, so that the original isn&rsquo;t altered when some
+of the parsers match, but others don&rsquo;t.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">seq</span> <span class="o">*</span><span class="n">parsers</span>
+    <span class="nb">proc</span> <span class="k">do</span> <span class="o">|</span><span class="n">state</span><span class="o">|</span>
+      <span class="n">s</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">clone</span>
+      <span class="n">results</span> <span class="o">=</span> <span class="o">[]</span>
+      <span class="n">parsers</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">ps</span><span class="o">|</span> 
+        <span class="n">results</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">res</span> <span class="o">=</span> <span class="n">ps</span><span class="o">.</span><span class="n">to_parser</span><span class="o">[</span><span class="n">s</span><span class="o">]</span><span class="p">)</span>
+        <span class="k">break</span> <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">nil?</span>
+      <span class="k">end</span>
+      <span class="k">if</span> <span class="n">results</span><span class="o">.</span><span class="n">all?</span><span class="p">{</span><span class="o">|</span><span class="n">e</span><span class="o">|</span> <span class="o">!</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">nil?</span><span class="p">)</span> <span class="p">}</span>
+        <span class="n">parsers</span><span class="o">.</span><span class="n">map</span><span class="p">{</span><span class="o">|</span><span class="n">ps</span><span class="o">|</span> <span class="n">ps</span><span class="o">.</span><span class="n">to_parser</span><span class="o">[</span><span class="n">state</span><span class="o">]</span><span class="p">}</span>
+      <span class="k">else</span>
+        <span class="kp">nil</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>takes a parser and a block and returns another parser that matches the same pattern,
+but passes the value returned by the original parser to the block before returning it.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">action</span> <span class="n">psr</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">block</span>
+    <span class="nb">proc</span> <span class="k">do</span> <span class="o">|</span><span class="n">state</span><span class="o">|</span>
+      <span class="k">if</span> <span class="o">!</span><span class="p">(</span><span class="n">res</span> <span class="o">=</span> <span class="n">psr</span><span class="o">.</span><span class="n">to_parser</span><span class="o">[</span><span class="n">state</span><span class="o">]</span><span class="p">)</span><span class="o">.</span><span class="n">nil?</span>
+        <span class="n">block</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+      <span class="k">else</span>
+        <span class="kp">nil</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-9'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-9">&#182;</a>
+        </div>
+        <p>takes a parser and returns another parser that matches the same pattern, but always
+returns false if there&rsquo;s a match or nil if not. This is useful for matching patterns
+that we want to ignore (like whitespace).</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">ignore</span> <span class="n">psr</span>
+    <span class="n">action</span> <span class="n">psr</span><span class="o">.</span><span class="n">to_parser</span> <span class="k">do</span>
+      <span class="kp">false</span>
+    <span class="k">end</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-10'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-10">&#182;</a>
+        </div>
+        <p>takes a begining parser, a middle parser and an end parser and returns another parser
+that matches the three parsers' patterns in sequence, returning the result of the middle
+parser. This is useful for matching things between brackets, parens, quote-marks etc.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">between</span> <span class="n">before</span><span class="p">,</span> <span class="n">cont</span><span class="p">,</span> <span class="n">after</span>
+    <span class="nb">proc</span> <span class="k">do</span> <span class="o">|</span><span class="n">state</span><span class="o">|</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="n">seq</span><span class="p">(</span><span class="n">before</span><span class="p">,</span> <span class="n">cont</span><span class="p">,</span> <span class="n">after</span><span class="p">)</span><span class="o">[</span><span class="n">state</span><span class="o">]</span>
+      <span class="n">result</span><span class="o">.</span><span class="n">nil?</span> <span class="p">?</span> <span class="kp">nil</span> <span class="p">:</span> <span class="n">result</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span>
+    <span class="k">end</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-11'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-11">&#182;</a>
+        </div>
+        <p>takes an item parser and a seperator parser and returns a parser that matches a list
+of items separated by the separator. If the returned parser matches, the separator is
+ignored and the result is an array of the matched items.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">list</span> <span class="n">item</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;,&quot;</span>
+    <span class="n">action</span><span class="p">(</span><span class="n">seq</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">rep0</span><span class="p">(</span><span class="n">seq</span><span class="p">(</span><span class="n">ignore</span><span class="p">(</span><span class="n">sep</span><span class="p">),</span> <span class="n">item</span><span class="p">))))</span> <span class="k">do</span> <span class="o">|</span><span class="n">ast</span><span class="o">|</span>
+      <span class="n">f</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="n">ast</span>
+      <span class="n">r</span><span class="o">.</span><span class="n">map</span><span class="p">{</span><span class="o">|</span><span class="n">e</span><span class="o">|</span> <span class="n">e</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span><span class="p">}</span><span class="o">.</span><span class="n">unshift</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">end</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-12'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-12">&#182;</a>
+        </div>
+        <p>takes two parsers and returns another parser that matches only when the first parser
+matches and the second parser doesn&rsquo;t match.</p>
+
+<p>the state is cloned before being parsed, so that it isn&rsquo;t altered if both parsers match</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">except</span> <span class="n">yes</span><span class="p">,</span> <span class="n">no</span>
+    <span class="nb">proc</span> <span class="k">do</span> <span class="o">|</span><span class="n">state</span><span class="o">|</span>
+      <span class="n">s</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">clone</span> <span class="c1"># this is so that if there are no matches, then state isn&#39;t altered</span>
+      <span class="k">if</span> <span class="n">no</span><span class="o">.</span><span class="n">to_parser</span><span class="o">[</span><span class="n">s</span><span class="o">].</span><span class="n">nil?</span>
+        <span class="n">yes</span><span class="o">.</span><span class="n">to_parser</span><span class="o">[</span><span class="n">state</span><span class="o">]</span>
+      <span class="k">else</span>
+        <span class="kp">nil</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-13'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-13">&#182;</a>
+        </div>
+        <p>returns a parser that matches anything. Most commonly used with except (eg.
+except(anything, whitespace))</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">anything</span>
+    <span class="nb">proc</span> <span class="k">do</span> <span class="o">|</span><span class="n">state</span><span class="o">|</span>
+      <span class="n">res</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">remaining</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span>
+      <span class="n">state</span><span class="o">.</span><span class="n">advance</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+      <span class="n">res</span>
+    <span class="k">end</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-14'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-14">&#182;</a>
+        </div>
+        <p>returns a parser that always fails (ie. always returns nil)</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">fail</span>
+    <span class="nb">proc</span> <span class="k">do</span> <span class="o">|</span><span class="n">state</span><span class="o">|</span>
+      <span class="kp">nil</span>
+    <span class="k">end</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-15'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-15">&#182;</a>
+        </div>
+        <p>returns a parser that matches the end of the string</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">eos</span>
+    <span class="n">ignore</span><span class="sr"> /\Z/</span>
+  <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-16'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-16">&#182;</a>
+        </div>
+        <p>takes a Rubec::State object and a parser and returns the state and the result of parsing
+that state using the given parser. Since false is used to indicate that something should
+be ingored, the data structure is walked and all false&rsquo;s are removed before it&rsquo;s returned.</p>
+
+<p>If a string is given instead of a State object, a new State object is created using the
+string and this is parsed instead.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">parse</span> <span class="n">state</span><span class="p">,</span> <span class="n">psr</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="no">State</span><span class="p">)</span> <span class="p">?</span> <span class="n">state</span> <span class="p">:</span> <span class="no">State</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+    <span class="n">ast</span> <span class="o">=</span> <span class="n">remove_all_false</span><span class="p">(</span><span class="n">psr</span><span class="o">.</span><span class="n">to_parser</span><span class="o">[</span><span class="n">state</span><span class="o">]</span><span class="p">)</span>
+    <span class="o">[</span><span class="n">state</span><span class="p">,</span> <span class="n">ast</span><span class="o">]</span>
+  <span class="k">end</span>
+
+  <span class="kp">private</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-17'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-17">&#182;</a>
+        </div>
+        <p>walks the given data structure and removes all items which are equal to false</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">remove_all_false</span> <span class="n">ast</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="o">[]</span>
+    <span class="k">if</span> <span class="n">ast</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="nb">Array</span><span class="p">)</span>
+      <span class="n">ast</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">e</span><span class="o">|</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">is_a?</span><span class="p">(</span><span class="nb">Array</span><span class="p">)</span>
+          <span class="n">result</span> <span class="o">&lt;&lt;</span> <span class="n">remove_all_false</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">elsif</span> <span class="n">e</span> <span class="o">!=</span> <span class="kp">false</span>
+          <span class="n">result</span> <span class="o">&lt;&lt;</span> <span class="n">e</span>
+        <span class="k">end</span>
+      <span class="k">end</span>
+    <span class="k">elsif</span> <span class="n">result</span> <span class="o">!=</span> <span class="kp">false</span>
+      <span class="n">result</span> <span class="o">=</span> <span class="n">ast</span>
+    <span class="k">end</span>
+    <span class="n">result</span>
+  <span class="k">end</span>
+<span class="k">end</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

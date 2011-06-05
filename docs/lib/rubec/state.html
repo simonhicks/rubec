@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>state.rb</title>
+  <link rel="stylesheet" href="http://jashkenas.github.com/docco/resources/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div id="jump_to">
+    Jump To &hellip;
+    <div id="jump_wrapper">
+      <div id="jump_page">
+          <a class="source" href="../example.html">example.rb</a>
+          <a class="source" href="../extensions/fixnum.html">fixnum.rb</a>
+          <a class="source" href="../extensions/object.html">object.rb</a>
+          <a class="source" href="../extensions/range.html">range.rb</a>
+          <a class="source" href="../extensions/regexp.html">regexp.rb</a>
+          <a class="source" href="../extensions/string.html">string.rb</a>
+          <a class="source" href="../rubec.html">rubec.rb</a>
+          <a class="source" href="state.html">state.rb</a>
+      </div>
+    </div>
+  </div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>state.rb</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>This object is used by Rubec parsers to store the current state during parsing</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">module</span> <span class="nn">Rubec</span>
+  <span class="k">class</span> <span class="nc">State</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>create the State object using a string that is to be parsed</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">def</span> <span class="nf">initialize</span> <span class="n">string</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+      <span class="vi">@string</span> <span class="o">=</span> <span class="n">string</span>
+      <span class="vi">@index</span> <span class="o">=</span> <span class="mi">0</span>
+      <span class="vi">@last_match</span> <span class="o">=</span> <span class="kp">nil</span>
+    <span class="k">end</span>
+
+    <span class="kp">attr_reader</span> <span class="ss">:last_match</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-3'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-3">&#182;</a>
+        </div>
+        <p>returns the remaining, unparsed portion of the string</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">def</span> <span class="nf">remaining</span>
+      <span class="vi">@string</span><span class="o">[</span><span class="vi">@index</span><span class="o">.</span><span class="n">.</span><span class="o">-</span><span class="mi">1</span><span class="o">]</span>
+    <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-4'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-4">&#182;</a>
+        </div>
+        <p>returns the line number of the line that is currently being parsed&hellip; this would
+be useful for reporting errors, except that it&rsquo;s not currently available from any
+of the parsers</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">def</span> <span class="nf">line</span>
+      <span class="vi">@string</span><span class="o">[</span><span class="mi">0</span><span class="o">.</span><span class="n">.</span><span class="vi">@index</span><span class="o">].</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span>
+    <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-5'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-5">&#182;</a>
+        </div>
+        <p>advance the position of this state object by n characters&hellip; this is to acccount
+for that fact that we have parsed n chars sucessfully.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">def</span> <span class="nf">advance</span> <span class="n">n</span>
+      <span class="vi">@index</span> <span class="o">+=</span> <span class="n">n</span>
+      <span class="nb">self</span>
+    <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-6'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-6">&#182;</a>
+        </div>
+        <p>This is used for regexp parsers. Since we only want a regexp parser to match the
+first part of the remaining string, we check for the presence of \A in the regexp
+before matching, making parsers easier to read and write.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">def</span> <span class="nf">match</span> <span class="n">re</span>
+      <span class="k">unless</span> <span class="n">re</span><span class="o">.</span><span class="n">inspect</span><span class="o">[</span><span class="mi">1</span><span class="o">.</span><span class="n">.</span><span class="mi">2</span><span class="o">]</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">A&quot;</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">inspect</span>
+        <span class="n">a</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span> <span class="o">=</span> <span class="s2">&quot;/</span><span class="se">\\</span><span class="s2">A&quot;</span>
+        <span class="n">re</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+      <span class="k">end</span>
+      <span class="vi">@last_match</span> <span class="o">=</span> <span class="n">remaining</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">re</span><span class="p">)</span>
+    <span class="k">end</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-7'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-7">&#182;</a>
+        </div>
+        <p>clone the State object. This is used for combinators that require several conditions
+to be met in order to match&hellip; it allows us to fail, after some parsers have matched
+without altering the original object.</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">def</span> <span class="nf">clone</span>
+      <span class="n">s</span> <span class="o">=</span> <span class="no">State</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="vi">@string</span><span class="p">)</span>
+      <span class="n">s</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="vi">@index</span>
+      <span class="n">s</span>
+    <span class="k">end</span>
+
+    <span class="kp">protected</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-8'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-8">&#182;</a>
+        </div>
+        <p>used when creating a clone</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>    <span class="k">def</span> <span class="nf">index</span><span class="o">=</span> <span class="n">n</span>
+      <span class="vi">@index</span> <span class="o">=</span> <span class="n">n</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>

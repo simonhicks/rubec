@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>string.rb</title>
+  <link rel="stylesheet" href="http://jashkenas.github.com/docco/resources/docco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div id="jump_to">
+    Jump To &hellip;
+    <div id="jump_wrapper">
+      <div id="jump_page">
+          <a class="source" href="../example.html">example.rb</a>
+          <a class="source" href="fixnum.html">fixnum.rb</a>
+          <a class="source" href="object.html">object.rb</a>
+          <a class="source" href="range.html">range.rb</a>
+          <a class="source" href="regexp.html">regexp.rb</a>
+          <a class="source" href="string.html">string.rb</a>
+          <a class="source" href="../rubec.html">rubec.rb</a>
+          <a class="source" href="../rubec/state.html">state.rb</a>
+      </div>
+    </div>
+  </div>
+  <table cellspacing=0 cellpadding=0>
+  <thead>
+    <tr>
+      <th class=docs><h1>string.rb</h1></th>
+      <th class=code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id='section-1'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-1">&#182;</a>
+        </div>
+        <p>Adds the #to_parser method to String</p>
+      </td>
+      <td class=code>
+        <div class='highlight'><pre><span class="k">class</span> <span class="nc">String</span></pre></div>
+      </td>
+    </tr>
+    <tr id='section-2'>
+      <td class=docs>
+        <div class="pilwrap">
+          <a class="pilcrow" href="#section-2">&#182;</a>
+        </div>
+        <p>Returns a parser that matches self and returns self or nil</p>
+
+      </td>
+      <td class=code>
+        <div class='highlight'><pre>  <span class="k">def</span> <span class="nf">to_parser</span>
+    <span class="nb">proc</span> <span class="k">do</span> <span class="o">|</span><span class="n">state</span><span class="o">|</span>
+      <span class="n">test_string</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">remaining</span><span class="o">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">len</span> <span class="o">=</span> <span class="nb">self</span><span class="o">.</span><span class="n">length</span><span class="p">)</span><span class="o">]</span>
+      <span class="k">if</span> <span class="nb">self</span> <span class="o">==</span> <span class="n">test_string</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">instance_eval</span> <span class="k">do</span>
+          <span class="n">advance</span> <span class="n">len</span>
+        <span class="k">end</span>
+        <span class="nb">self</span><span class="o">.</span><span class="n">clone</span>
+      <span class="k">else</span> 
+        <span class="kp">nil</span>
+      <span class="k">end</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span></pre></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>
