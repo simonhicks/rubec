@@ -17,30 +17,30 @@ Jeweler::Tasks.new do |gem|
   gem.name = "rubec"
   gem.homepage = "http://github.com/simonhicks/rubec"
   gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
-  gem.email = "me@simonhicks.org"
+  gem.summary = %Q{A set of parser combinators for ruby}
+  gem.description = %Q{Rubec is a set of parser combinators written in ruby... most of it was written in a single afternoon just to see if I could.}
+  gem.email = "ruby@simonhicks.org"
   gem.authors = ["Simon Hicks"]
   # dependencies defined in Gemfile
 end
 Jeweler::RubygemsDotOrgTasks.new
 
-require 'rake/testtask'
-Rake::TestTask.new(:test) do |test|
-  test.libs << 'lib' << 'test'
-  test.pattern = 'test/**/test_*.rb'
-  test.verbose = true
-end
+#require 'rake/testtask'
+#Rake::TestTask.new(:test) do |test|
+  #test.libs << 'lib' << 'test'
+  #test.pattern = 'test/**/test_*.rb'
+  #test.verbose = true
+#end
 
-require 'rcov/rcovtask'
-Rcov::RcovTask.new do |test|
-  test.libs << 'test'
-  test.pattern = 'test/**/test_*.rb'
-  test.verbose = true
-  test.rcov_opts << '--exclude "gems/*"'
-end
+#require 'rcov/rcovtask'
+#Rcov::RcovTask.new do |test|
+  #test.libs << 'test'
+  #test.pattern = 'test/**/test_*.rb'
+  #test.verbose = true
+  #test.rcov_opts << '--exclude "gems/*"'
+#end
 
-task :default => :test
+#task :default => :test
 
 require 'rake/rdoctask'
 Rake::RDocTask.new do |rdoc|
