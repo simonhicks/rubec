@@ -39,7 +39,8 @@ Gem::Specification.new do |s|
     "lib/extensions/regexp.rb",
     "lib/extensions/string.rb",
     "lib/rubec.rb",
-    "lib/rubec/state.rb"
+    "lib/rubec/state.rb",
+    "rubec.gemspec"
   ]
   s.homepage = %q{http://github.com/simonhicks/rubec}
   s.licenses = ["MIT"]
