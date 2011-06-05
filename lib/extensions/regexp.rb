@@ -1,3 +1,4 @@
+# Adds a #to_parser method to Regexp
 class Regexp
   def to_parser
     proc do |state|

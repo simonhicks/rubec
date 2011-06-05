@@ -1,4 +1,6 @@
+# Adds the #to_parser method to String
 class String
+  # Returns a parser that matches self and returns self or nil
   def to_parser
     proc do |state|
       test_string = state.remaining[0, (len = self.length)]
