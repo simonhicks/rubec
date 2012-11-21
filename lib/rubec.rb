@@ -24,7 +24,7 @@
 #     zero = 0.to_parser
 #     non_zero = (1..9).to_parser
 #     digit = choice(zero, non_zero)
-#     integer = seq(zero, rep0(digit))
+#     integer = seq(non_zero, rep0(digit))
 # 
 # In fact, all the combinators will automatically call #to_parser whenever they expect 
 # a parser so you can also do this...
